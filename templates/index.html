@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}KIUVINME V2 - Home{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h2 class="card-title">KIUVINME V2</h2>
+            </div>
+            <div class="card-body">
+                <p class="lead">საიტი შეიძლება იყოს გაუმართავი, miskuzi</p>
+                
+                {% if current_user.is_authenticated %}
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('start_matching') }}" class="btn btn-primary btn-lg">Start Chatting</a>
+                    </div>
+                {% else %}
+                    <p>გთხოვთ <a href="{{ url_for('login') }}">შედით</a> ან <a href="{{ url_for('register') }}">დარეგისტრირდით</a> ,რათა "იჩათაოთ" ^ _ ^</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if current_user.is_authenticated %}
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title">სტატისტიკა</h3>
+            </div>
+            <div class="card-body">
+                <p>ონლაინშია: <span id="online-count">...</span></p>
+                <p>დღეს ილაპარაკა: <span id="chats-count">...</span></p>
+                <p>შენი პროფილი ნახა: <span id="profile-views">...</span></p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if current_user.is_authenticated %}
+<script>
+    // We can add some code to update the stats in real-time here
+    document.getElementById('online-count').textContent = Math.floor(Math.random() * 50) + 10;
+    document.getElementById('chats-count').textContent = Math.floor(Math.random() * 100) + 50;
+    document.getElementById('profile-views').textContent = Math.floor(Math.random() * 20);
+</script>
+{% endif %}
+{% endblock %}

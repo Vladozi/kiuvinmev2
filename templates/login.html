@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}University Video Chat - Login{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h2 class="card-title">შესვლა</h2>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">სახელი</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">პაროლი</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">შესვლა</button>
+                </form>
+            </div>
+            <div class="card-footer">
+                <p>არ გაქვს ანგარიში? <a href="{{ url_for('register') }}">რეგისტრაცია</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
