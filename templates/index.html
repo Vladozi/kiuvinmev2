@@ -2,6 +2,237 @@
 
 {% block title %}KIUVINME V2 - Home{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Feature cards styling */
+    .feature-card {
+        transition: transform 0.3s;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    /* Star rating styles */
+    .star-rating {
+        direction: rtl;
+        display: inline-block;
+        padding: 20px;
+    }
+
+    .star-rating input {
+        display: none;
+    }
+
+    .star-rating label {
+        color: #ccc;
+        cursor: pointer;
+        font-size: 30px;
+        padding: 0 0.1em;
+        transition: color 0.2s;
+    }
+
+    .star-rating label:hover,
+    .star-rating label:hover ~ label,
+    .star-rating input:checked ~ label {
+        color: #f7d030;
+    }
+    
+    /* Comment section styles */
+    .comment-section {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .comment-card {
+        margin-bottom: 15px;
+        transition: all 0.2s;
+    }
+    
+    .comment-card:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .star-display {
+        color: #f7d030;
+    }
+    
+    .upvote-btn {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .upvote-btn:hover {
+        color: #4e73df;
+    }
+    
+    /* Carousel Custom Styles */
+    .carousel-control-prev,
+    .carousel-control-next {
+        width: 5%;
+        background-color: rgba(0,0,0,0.2);
+        border-radius: 50%;
+        height: 40px;
+        width: 40px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+    
+    .carousel-indicators {
+        bottom: -10px;
+    }
+    
+    .ratings-thumbnails {
+        padding-top: 20px;
+    }
+    
+    .rating-thumbnail {
+        cursor: pointer;
+        min-width: 100px;
+        opacity: 0.7;
+        transition: all 0.3s;
+    }
+    
+    .rating-thumbnail.active {
+        opacity: 1;
+        border-bottom: 2px solid #4e73df;
+    }
+    
+    .rating-thumbnail:hover {
+        opacity: 1;
+    }
+    
+    .small-card {
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        font-size: 0.8rem;
+    }
+    
+    .small i.fas.fa-star {
+        font-size: 0.7rem;
+    }
+    
+    .carousel .comment-card {
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        border: none;
+        margin: 0 30px;
+    }
+    
+    /* Stats icon styling */
+    .stats-icon {
+        width: 40px;
+        margin-right: 10px;
+        color: #4e73df;
+    }
+    
+    .stats-value {
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    
+    .stats-item {
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .stats-label {
+        margin-bottom: 0;
+    }
+    
+    /* Loading spinner for stats */
+    .stats-loading {
+        display: inline-block;
+        width: 1.5rem;
+        height: 1.5rem;
+        border: 3px solid rgba(0,0,0,0.1);
+        border-radius: 50%;
+        border-top-color: #4e73df;
+        animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Responsive styles */
+    @media (max-width: 576px) {
+        .feature-card {
+            margin-bottom: 15px;
+        }
+        
+        .feature-card .fa-3x {
+            font-size: 2.5rem;
+        }
+        
+        .carousel-control-prev,
+        .carousel-control-next {
+            width: 35px;
+            height: 35px;
+        }
+        
+        .carousel .comment-card {
+            margin: 0 10px;
+        }
+        
+        .carousel-item .card-body {
+            padding: 0.75rem;
+        }
+        
+        .ratings-thumbnails {
+            justify-content: center;
+        }
+        
+        .rating-thumbnail {
+            min-width: 80px;
+        }
+        
+        .carousel-control-prev-icon,
+        .carousel-control-next-icon {
+            width: 25px;
+            height: 25px;
+        }
+        
+        .upvote-btn {
+            padding: 5px;
+            display: inline-block;
+        }
+        
+        .star-rating {
+            padding: 10px;
+        }
+        
+        .star-rating label {
+            font-size: 24px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .stats-item {
+            flex-direction: row;
+            align-items: center;
+        }
+        
+        .stats-icon {
+            width: 30px;
+            margin-right: 10px;
+        }
+        
+        .stats-icon .fa-2x {
+            font-size: 1.5rem;
+        }
+        
+        .stats-value {
+            font-size: 1rem;
+        }
+        
+        .comment-section {
+            max-height: 350px;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row">
     <div class="col-md-8">
@@ -13,8 +244,59 @@
                 <p class="lead">საიტი შეიძლება იყოს გაუმართავი, miskuzi</p>
                 
                 {% if current_user.is_authenticated %}
-                    <div class="text-center mt-4">
-                        <a href="{{ url_for('start_matching') }}" class="btn btn-primary btn-lg">Start Chatting</a>
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card feature-card mb-3">
+                                <div class="card-body text-center py-4">
+                                    <i class="fas fa-video fa-3x mb-3 text-primary"></i>
+                                    <h4>პირდაპირი ჩათი</h4>
+                                    <p class="mb-0">ვიდეო ჩათი შემთხვევით მომხმარებელთან</p>
+                                    <a href="{{ url_for('start_matching') }}" class="btn btn-primary mt-3">დაწყება</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card feature-card mb-3">
+                                <div class="card-body text-center py-4">
+                                    <i class="fas fa-users fa-3x mb-3 text-primary"></i>
+                                    <h4>ჯგუფური საუბარი</h4>
+                                    <p class="mb-0">შექმენი ან შეუერთდი ჯგუფურ ვიდეო საუბარს</p>
+                                    <a href="{{ url_for('group_chat_index') }}" class="btn btn-primary mt-3">დაწყება</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card feature-card mb-3">
+                                <div class="card-body text-center py-4">
+                                    <i class="fas fa-comments fa-3x mb-3 text-primary"></i>
+                                    <h4>მხოლოდ მიმოწერა</h4>
+                                    <p class="mb-0">ტექსტური ჩატი სხვადასხვა კატეგორიებში</p>
+                                    <a href="{{ url_for('chatting_index') }}" class="btn btn-primary mt-3">დაწყება</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card feature-card">
+                                <div class="card-body text-center py-4">
+                                    <i class="fas fa-save fa-3x mb-3 text-primary"></i>
+                                    <h4>ჩანაწერები</h4>
+                                    <p class="mb-0">ნახე და გადმოწერე შენი ჩაწერილი საუბრები</p>
+                                    <a href="{{ url_for('my_recordings') }}" class="btn btn-primary mt-3">ნახვა</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card feature-card">
+                                <div class="card-body text-center py-4">
+                                    <i class="fas fa-star fa-3x mb-3 text-primary"></i>
+                                    <h4>შეფასება</h4>
+                                    <p class="mb-0">შეაფასე საიტი და გააზიარე შენი აზრი</p>
+                                    <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#ratingModal">შეფასება</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 {% else %}
                     <p>გთხოვთ <a href="{{ url_for('login') }}">შედით</a> ან <a href="{{ url_for('register') }}">დარეგისტრირდით</a> ,რათა "იჩათაოთ" ^ _ ^</p>
@@ -23,28 +305,314 @@
         </div>
     </div>
 
-    {% if current_user.is_authenticated %}
     <div class="col-md-4">
-        <div class="card">
+        {% if current_user.is_authenticated %}
+        <div class="card mb-4">
             <div class="card-header bg-primary text-white">
                 <h3 class="card-title">სტატისტიკა</h3>
             </div>
             <div class="card-body">
-                <p>ონლაინშია: <span id="online-count">...</span></p>
-                <p>დღეს ილაპარაკა: <span id="chats-count">...</span></p>
-                <p>შენი პროფილი ნახა: <span id="profile-views">...</span></p>
+                <div class="stats-item">
+                    <div class="stats-icon">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                    <div>
+                        <p class="stats-label">ონლაინშია:</p>
+                        <div id="online-count" class="stats-value">
+                            <div class="stats-loading"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stats-item">
+                    <div class="stats-icon">
+                        <i class="fas fa-comments fa-2x"></i>
+                    </div>
+                    <div>
+                        <p class="stats-label">დღეს ილაპარაკა:</p>
+                        <div id="chats-count" class="stats-value">
+                            <div class="stats-loading"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stats-item">
+                    <div class="stats-icon">
+                        <i class="fas fa-eye fa-2x"></i>
+                    </div>
+                    <div>
+                        <p class="stats-label">შენი პროფილი ნახა:</p>
+                        <div id="profile-views" class="stats-value">
+                            <div class="stats-loading"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title">უახლესი შეფასებები</h3>
+            </div>
+            <div class="card-body comment-section scrollable-area">
+                <div class="text-center mb-3">
+                    <h5>საშუალო შეფასება</h5>
+                    <div class="star-display">
+                        {% for i in range(5) %}
+                            {% if i < avg_rating|int %}
+                                <i class="fas fa-star"></i>
+                            {% elif i < avg_rating and i >= avg_rating|int %}
+                                <i class="fas fa-star-half-alt"></i>
+                            {% else %}
+                                <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <p class="mb-0">{{ "%.1f"|format(avg_rating) }} / 5</p>
+                </div>
+                
+                {% if top_comments %}
+                    <!-- Carousel Implementation -->
+                    <div id="ratingsCarousel" class="carousel slide" data-bs-ride="carousel">
+                        <!-- Carousel indicators -->
+                        <div class="carousel-indicators">
+                            {% for comment in top_comments %}
+                                <button type="button" data-bs-target="#ratingsCarousel" data-bs-slide-to="{{ loop.index0 }}" 
+                                    {% if loop.first %}class="active"{% endif %} aria-current="true" 
+                                    aria-label="Rating {{ loop.index }}"></button>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Carousel items -->
+                        <div class="carousel-inner">
+                            {% for comment in top_comments %}
+                                <div class="carousel-item {% if loop.first %}active{% endif %}">
+                                    <div class="card comment-card">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <div>
+                                                    <span class="fw-bold">{{ comment.user.username }}</span>
+                                                    <span class="text-muted ms-2">
+                                                        {{ ((time.time() - comment.created_at) / 86400)|int }} დღის წინ
+                                                    </span>
+                                                </div>
+                                                <div class="star-display">
+                                                    {% for i in range(comment.stars) %}
+                                                        <i class="fas fa-star"></i>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                            <p class="mb-3">{{ comment.comment }}</p>
+                                            <div class="text-end">
+                                                {% if current_user.is_authenticated %}
+                                                    {% if has_upvoted(comment.id) %}
+                                                        <span class="text-muted">
+                                                            <i class="fas fa-thumbs-up"></i> {{ comment.upvotes }}
+                                                        </span>
+                                                    {% else %}
+                                                        <a href="{{ url_for('upvote_comment', rating_id=comment.id) }}" class="text-decoration-none upvote-btn">
+                                                            <i class="fas fa-thumbs-up"></i> {{ comment.upvotes }}
+                                                        </a>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class="text-muted">
+                                                        <i class="fas fa-thumbs-up"></i> {{ comment.upvotes }}
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Carousel controls -->
+                        <button class="carousel-control-prev" type="button" data-bs-target="#ratingsCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#ratingsCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Carousel thumbnails - show all ratings at the bottom as mini-cards -->
+                    <div class="ratings-thumbnails d-flex overflow-auto mt-3 scrollable-area">
+                        {% for comment in top_comments %}
+                            <div class="rating-thumbnail me-2 {% if loop.first %}active{% endif %}" 
+                                 data-bs-target="#ratingsCarousel" data-bs-slide-to="{{ loop.index0 }}">
+                                <div class="small-card p-2">
+                                    <div class="d-flex align-items-center">
+                                        <span class="small">{{ comment.user.username }}</span>
+                                        <div class="ms-2">
+                                            {% for i in range(comment.stars) %}
+                                                <i class="fas fa-star small"></i>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-center text-muted">ჯერ არ არის შეფასებები</p>
+                {% endif %}
             </div>
         </div>
     </div>
-    {% endif %}
+</div>
+
+<!-- Rating Modal -->
+<div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ratingModalLabel">შეაფასე საიტი</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('submit_rating') }}" method="post">
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <div class="star-rating">
+                            <input type="radio" id="star5" name="stars" value="5" checked />
+                            <label for="star5" title="5 ვარსკვლავი"><i class="fas fa-star"></i></label>
+                            <input type="radio" id="star4" name="stars" value="4" />
+                            <label for="star4" title="4 ვარსკვლავი"><i class="fas fa-star"></i></label>
+                            <input type="radio" id="star3" name="stars" value="3" />
+                            <label for="star3" title="3 ვარსკვლავი"><i class="fas fa-star"></i></label>
+                            <input type="radio" id="star2" name="stars" value="2" />
+                            <label for="star2" title="2 ვარსკვლავი"><i class="fas fa-star"></i></label>
+                            <input type="radio" id="star1" name="stars" value="1" />
+                            <label for="star1" title="1 ვარსკვლავი"><i class="fas fa-star"></i></label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">კომენტარი</label>
+                        <textarea class="form-control" id="comment" name="comment" rows="4" placeholder="გაგვიზიარე შენი აზრი..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">დახურვა</button>
+                    <button type="submit" class="btn btn-primary">შეფასება</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 {% if current_user.is_authenticated %}
 <script>
-    // We can add some code to update the stats in real-time here
-    document.getElementById('online-count').textContent = Math.floor(Math.random() * 50) + 10;
-    document.getElementById('chats-count').textContent = Math.floor(Math.random() * 100) + 50;
-    document.getElementById('profile-views').textContent = Math.floor(Math.random() * 20);
+    // Load real statistics
+    document.addEventListener('DOMContentLoaded', function() {
+        // Detect if we're on a mobile device
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        // Fetch statistics from the server
+        function fetchStatistics() {
+            fetch('/get-statistics')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Update the statistics in the UI with zeros as fallback
+                    document.getElementById('online-count').textContent = data.online_count || 0;
+                    document.getElementById('chats-count').textContent = data.chats_count || 0;
+                    document.getElementById('profile-views').textContent = data.profile_views || 0;
+                })
+                .catch(error => {
+                    console.error('Error fetching statistics:', error);
+                    // Show zeros instead of error message
+                    document.getElementById('online-count').textContent = '0';
+                    document.getElementById('chats-count').textContent = '0';
+                    document.getElementById('profile-views').textContent = '0';
+                });
+        }
+        
+        // Fetch statistics immediately
+        fetchStatistics();
+        
+        // Then refresh every 30 seconds
+        setInterval(fetchStatistics, 30000);
+        
+        // Initialize the carousel with custom settings
+        var carouselOptions = {
+            interval: isMobile ? 7000 : 5000, // Longer interval on mobile
+            wrap: true,      // Loop back to first slide
+            touch: true      // Enable touch swiping on mobile
+        };
+        
+        // Make sure carousel exists before initializing
+        const carouselElement = document.getElementById('ratingsCarousel');
+        if (carouselElement) {
+            var ratingsCarousel = new bootstrap.Carousel(carouselElement, carouselOptions);
+            
+            // Handle thumbnail clicks
+            const thumbnails = document.querySelectorAll('.rating-thumbnail');
+            thumbnails.forEach(thumb => {
+                thumb.addEventListener('click', function() {
+                    thumbnails.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+            
+            // Update active thumbnail when carousel slides
+            carouselElement.addEventListener('slide.bs.carousel', function (event) {
+                thumbnails.forEach(t => t.classList.remove('active'));
+                thumbnails[event.to].classList.add('active');
+            });
+            
+            // Handle swipe gestures better on touchscreens
+            if (isMobile) {
+                let touchstartX = 0;
+                let touchendX = 0;
+                
+                carouselElement.addEventListener('touchstart', function(e) {
+                    touchstartX = e.changedTouches[0].screenX;
+                }, false);
+                
+                carouselElement.addEventListener('touchend', function(e) {
+                    touchendX = e.changedTouches[0].screenX;
+                    handleSwipe();
+                }, false);
+                
+                function handleSwipe() {
+                    if (touchendX < touchstartX - 50) {
+                        // Swiped left
+                        ratingsCarousel.next();
+                    }
+                    if (touchendX > touchstartX + 50) {
+                        // Swiped right
+                        ratingsCarousel.prev();
+                    }
+                }
+            }
+        }
+    });
 </script>
 {% endif %}
+{% endblock %}
+
+{% block footer %}
+<!-- Donation section -->
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3 class="card-title">დაეხმარე საიტს</h3>
+                </div>
+                <div class="card-body text-center">
+                    <p>დაეხმარე საიტს განვითარებაში</p>
+                    <a href="https://donationalerts.com/yourlink" class="btn btn-primary">შემოწირულობა</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End donation section -->
 {% endblock %}

@@ -2,10 +2,80 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>{% block title %}KIUVINME V2{% endblock %}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Global responsive styles */
+        @media (max-width: 768px) {
+            h2.card-title {
+                font-size: 1.5rem;
+            }
+            
+            h3.card-title {
+                font-size: 1.3rem;
+            }
+            
+            h4 {
+                font-size: 1.1rem;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .lead {
+                font-size: 1rem;
+            }
+        }
+        
+        /* Navigation responsive improvements */
+        @media (max-width: 768px) {
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+            
+            .dropdown-menu {
+                min-width: auto;
+            }
+            
+            .navbar-toggler {
+                padding: 0.375rem;
+            }
+        }
+        
+        /* Make scrollable areas friendlier on touch devices */
+        .scrollable-area {
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Fix for iOS Safari form elements */
+        input,
+        textarea,
+        select {
+            font-size: 16px !important; /* Prevents zoom on focus in iOS */
+        }
+        
+        /* Improve form controls on mobile */
+        .form-control,
+        .btn {
+            padding: 0.375rem 0.75rem;
+            height: auto;
+        }
+        
+        /* Ensure sufficient space between buttons on mobile */
+        .btn-group .btn {
+            margin-right: 5px;
+        }
+        
+        /* Make sure images and videos don't overflow on small screens */
+        img, video {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -18,18 +88,33 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     {% if current_user.is_authenticated %}
-                    <li class="nav-item">
-                        <span class="nav-link">მოგესალმებით, {{ current_user.username }}</span>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('logout') }}">გასვლა</a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-circle me-1"></i> {{ current_user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('group_chat_index') }}">
+                                <i class="fas fa-users me-2"></i> ჯგუფური ჩათი
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('my_recordings') }}">
+                                <i class="fas fa-save me-2"></i> ჩემი ჩანაწერები
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i> გასვლა
+                            </a></li>
+                        </ul>
                     </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('login') }}">შესვლა</a>
+                        <a class="nav-link" href="{{ url_for('login') }}">
+                            <i class="fas fa-sign-in-alt me-1"></i> შესვლა
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('register') }}">რეგისტრაცია</a>
+                        <a class="nav-link" href="{{ url_for('register') }}">
+                            <i class="fas fa-user-plus me-1"></i> რეგისტრაცია
+                        </a>
                     </li>
                     {% endif %}
                 </ul>
@@ -42,7 +127,7 @@
         {% if messages %}
         <div class="alert alert-info">
             {% for message in messages %}
-            <p>{{ message }}</p>
+            <p class="mb-0">{{ message }}</p>
             {% endfor %}
         </div>
         {% endif %}
@@ -50,9 +135,40 @@
 
         {% block content %}{% endblock %}
     </div>
+    
+    {% block footer %}{% endblock %}
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
+    
+    <script>
+    // Detect if we're on a mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        if (isMobile) {
+            // Make dropdowns close after clicking on small screens
+            document.querySelectorAll('.dropdown-menu a').forEach(item => {
+                item.addEventListener('click', () => {
+                    const dropdownToggle = item.closest('.dropdown').querySelector('.dropdown-toggle');
+                    const dropdown = bootstrap.Dropdown.getInstance(dropdownToggle);
+                    if (dropdown) {
+                        dropdown.hide();
+                    }
+                });
+            });
+            
+            // Better touch handling for buttons
+            document.querySelectorAll('.btn').forEach(btn => {
+                if (btn.offsetWidth < 44 || btn.offsetHeight < 44) {
+                    btn.style.minWidth = '44px';
+                    btn.style.minHeight = '44px';
+                }
+            });
+        }
+    });
+    </script>
+    
     {% block extra_js %}{% endblock %}
 </body>
 </html>

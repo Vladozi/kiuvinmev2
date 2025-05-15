@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}KIUVINME V2 - My Recordings{% endblock %}
+
+{% block extra_css %}
+<style>
+    .recording-card {
+        transition: transform 0.2s;
+        margin-bottom: 15px;
+    }
+    
+    .recording-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .recording-type {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+    }
+    
+    .recording-group {
+        background-color: #4e73df;
+        color: white;
+    }
+    
+    .recording-private {
+        background-color: #f6c23e;
+        color: white;
+    }
+    
+    .expires-soon {
+        color: #e74a3b;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6c757d;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+    
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 20px;
+        color: #4e73df;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    
+    .back-link:hover {
+        color: #2e59d9;
+    }
+    
+    .back-link i {
+        margin-right: 5px;
+    }
+    
+    .file-size {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    /* Added styles for button group */
+    .btn-group {
+        display: flex;
+        gap: 5px;
+    }
+    
+    .btn-delete {
+        background-color: #e74a3b;
+        color: white;
+    }
+    
+    .btn-delete:hover {
+        background-color: #d52a1a;
+        color: white;
+    }
+    
+    .invalid-video {
+        color: #e74a3b;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <a href="{{ url_for('index') }}" class="back-link">
+            <i class="fas fa-arrow-left"></i> უკან დაბრუნება
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title">ჩემი ჩანაწერები</h3>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> ჩანაწერები ინახება 24 საათის განმავლობაში. გთხოვთ, ჩამოტვირთოთ თქვენთვის საჭირო ჩანაწერები ამ პერიოდში.
+                </div>
+                
+                {% if recordings %}
+                    <div class="row">
+                        {% for recording in recordings %}
+                            <div class="col-md-6">
+                                <div class="card recording-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-1">
+                                            ჩანაწერი #{{ recording.id[:8] }}
+                                            {% if recording.room_id %}
+                                                <span class="recording-type recording-group">ჯგუფური</span>
+                                            {% else %}
+                                                <span class="recording-type recording-private">პირადი</span>
+                                            {% endif %}
+                                        </h5>
+                                        
+                                        <p class="text-muted mb-1">
+                                            შექმნილია: {{ (recording.created_at|float)|datetime('%Y-%m-%d %H:%M') }}
+                                        </p>
+                                        
+                                        <p class="mb-2 file-size">
+                                            {% if recording.file_size > 0 %}
+                                                {{ (recording.file_size / 1024 / 1024)|round(2) }} MB • 
+                                            {% else %}
+                                                <span class="invalid-video">0.0 MB (არასწორი ვიდეო) • </span>
+                                            {% endif %}
+                                            ჩამოტვირთულია {{ recording.download_count }} ჯერ
+                                        </p>
+                                        
+                                        {% set time_left = recording.expires_at|float - time.time() %}
+                                        {% set hours_left = (time_left / 3600)|int %}
+                                        
+                                        <p class="mb-3 {% if hours_left < 6 %}expires-soon{% endif %}">
+                                            <i class="fas fa-clock"></i>
+                                            ვადა იწურება: {{ hours_left }} საათში
+                                        </p>
+                                        
+                                        <div class="text-end btn-group">
+                                            <a href="{{ url_for('download_recording', recording_id=recording.id) }}" 
+                                               class="btn btn-primary">
+                                                <i class="fas fa-download"></i> ჩამოტვირთვა
+                                            </a>
+                                            <a href="{{ url_for('delete_recording', recording_id=recording.id) }}" 
+                                               onclick="return confirm('დარწმუნებული ხართ, რომ გსურთ ამ ჩანაწერის წაშლა?');"
+                                               class="btn btn-delete">
+                                                <i class="fas fa-trash"></i> წაშლა
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-video-slash"></i>
+                        </div>
+                        <h4>ჯერ არ გაქვთ ჩანაწერები</h4>
+                        <p>დაიწყეთ ვიდეოს ჩაწერა ჯგუფურ ან პირად ჩათში "ჩაწერის" ღილაკზე დაჭერით.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Add this filter to format timestamps -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Format timestamps
+        function formatDate(timestamp) {
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleString();
+        }
+        
+        // Apply to all timestamp elements
+        document.querySelectorAll('.timestamp').forEach(el => {
+            el.textContent = formatDate(parseFloat(el.dataset.timestamp));
+        });
+    });
+</script>
+{% endblock %}

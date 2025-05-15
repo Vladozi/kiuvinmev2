@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+
+{% block title %}KIUVINME V2 - მართვა: {{ room.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .manage-card {
+        margin-bottom: 20px;
+    }
+    
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 20px;
+        color: #4e73df;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    
+    .back-link:hover {
+        color: #2e59d9;
+    }
+    
+    .back-link i {
+        margin-right: 5px;
+    }
+    
+    .participant-item {
+        padding: 10px 15px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .participant-info {
+        display: flex;
+        align-items: center;
+    }
+    
+    .participant-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #4e73df;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    
+    .participant-name {
+        font-weight: bold;
+    }
+    
+    .participant-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .admin-badge {
+        background-color: #4e73df;
+        color: white;
+        font-size: 0.8rem;
+        padding: 3px 8px;
+        border-radius: 4px;
+        margin-left: 10px;
+    }
+    
+    .invite-code {
+        font-family: monospace;
+        background-color: #e9ecef;
+        padding: 8px 15px;
+        border-radius: 4px;
+        font-size: 1.2rem;
+        letter-spacing: 2px;
+        display: inline-block;
+    }
+    
+    .copy-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #4e73df;
+        margin-left: 10px;
+        transition: color 0.2s;
+    }
+    
+    .copy-btn:hover {
+        color: #2e59d9;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <a href="{{ url_for('chatting_room', room_code=room.code) }}" class="back-link">
+            <i class="fas fa-arrow-left"></i> დაბრუნება ჩატში
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card manage-card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title">ჩატის მართვა: {{ room.name }}</h3>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('manage_chatroom', room_code=room.code) }}" method="post">
+                    <input type="hidden" name="action" value="update_room">
+                    <div class="mb-3">
+                        <label for="room_name" class="form-label">ჩატის სახელი</label>
+                        <input type="text" class="form-control" id="room_name" name="room_name" value="{{ room.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">აღწერა</label>
+                        <textarea class="form-control" id="description" name="description" rows="3">{{ room.description }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">მოსაწვევი კოდი</label>
+                        <div>
+                            <span class="invite-code">{{ room.code }}</span>
+                            <button type="button" class="copy-btn" id="copy-invite-code" title="კოდის კოპირება">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">ეს კოდი შეგიძლიათ გაუზიაროთ სხვებს ჩატში შესამოსაერთებლად.</div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">ჩატის განახლება</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h3 class="card-title">მონაწილეები</h3>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> როგორც ჩატის ადმინისტრატორს, შეგიძლიათ მართოთ მონაწილეები. ადმინები განაგებენ ჩატს.
+                </div>
+                
+                <div class="participants-list">
+                    {% for participant in participants %}
+                    <div class="participant-item">
+                        <div class="participant-info">
+                            <div class="participant-avatar">
+                                {{ participant.username|upper|truncate(1, true, '') }}
+                            </div>
+                            <div>
+                                <span class="participant-name">{{ participant.username }}</span>
+                                {% if participant.is_admin %}
+                                <span class="admin-badge">ადმინი</span>
+                                {% endif %}
+                                {% if participant.id == current_user.id %}
+                                <span class="text-muted">(თქვენ)</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if participant.id != current_user.id %}
+                        <div class="participant-actions">
+                            <form action="{{ url_for('manage_chatroom', room_code=room.code) }}" method="post" class="d-inline">
+                                <input type="hidden" name="action" value="toggle_admin">
+                                <input type="hidden" name="participant_id" value="{{ participant.participant_id }}">
+                                <button type="submit" class="btn btn-sm {% if participant.is_admin %}btn-secondary{% else %}btn-primary{% endif %}">
+                                    <i class="fas fa-user-shield"></i> {% if participant.is_admin %}ადმინის წართმევა{% else %}ადმინის მინიჭება{% endif %}
+                                </button>
+                            </form>
+                            
+                            <form action="{{ url_for('manage_chatroom', room_code=room.code) }}" method="post" class="d-inline" 
+                                  onsubmit="return confirm('დარწმუნებული ხართ, რომ გსურთ {{ participant.username }}-ის ამოშლა?');">
+                                <input type="hidden" name="action" value="remove_participant">
+                                <input type="hidden" name="participant_id" value="{{ participant.participant_id }}">
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-user-times"></i> ამოშლა
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <h5 class="card-title">სახიფათო ზონა</h5>
+                <p class="card-text">ჩატის წაშლა გამოიწვევს ყველა მონაწილის წაშლას და ჩატის შეტყობინებების წაშლას.</p>
+                <button class="btn btn-outline-light" id="delete-chat-btn">
+                    <i class="fas fa-trash"></i> ჩატის წაშლა
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Chat Confirmation Modal -->
+<div class="modal fade" id="deleteChatModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ჩატის წაშლა</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-danger">ყურადღება! ეს ქმედება შეუქცევადია!</p>
+                <p>დარწმუნებული ხართ, რომ გსურთ ჩატ "{{ room.name }}"-ის წაშლა?</p>
+                <p>ყველა მონაწილე იქნება ამოშლილი და ყველა შეტყობინება წაიშლება.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">გაუქმება</button>
+                <a href="{{ url_for('delete_chatroom', room_code=room.code) }}" class="btn btn-danger">წაშლა</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Copy invite code functionality
+        const copyInviteBtn = document.getElementById('copy-invite-code');
+        const inviteCode = '{{ room.code }}';
+        
+        copyInviteBtn.addEventListener('click', function() {
+            navigator.clipboard.writeText(inviteCode)
+                .then(() => {
+                    copyInviteBtn.innerHTML = '<i class="fas fa-check"></i>';
+                    setTimeout(() => {
+                        copyInviteBtn.innerHTML = '<i class="fas fa-copy"></i>';
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('Failed to copy code: ', err);
+                    alert('კოდის კოპირება ვერ მოხერხდა');
+                });
+        });
+        
+        // Delete chat button
+        const deleteChatBtn = document.getElementById('delete-chat-btn');
+        const deleteChatModal = new bootstrap.Modal(document.getElementById('deleteChatModal'));
+        
+        deleteChatBtn.addEventListener('click', function() {
+            deleteChatModal.show();
+        });
+    });
+</script>
+{% endblock %}

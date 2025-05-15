@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}KIUVINME V2 - Create Room{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 20px;
+        color: #4e73df;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    
+    .back-link:hover {
+        color: #2e59d9;
+    }
+    
+    .back-link i {
+        margin-right: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <a href="{{ url_for('group_chat_index') }}" class="back-link">
+            <i class="fas fa-arrow-left"></i> უკან დაბრუნება
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card form-card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title">ახალი ჯგუფური ჩათის შექმნა</h3>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <div class="mb-3">
+                        <label for="room_name" class="form-label">ჯგუფის სახელი</label>
+                        <input type="text" class="form-control" id="room_name" name="room_name" required>
+                        <div class="form-text">მიუთითეთ თქვენი ჯგუფის სახელი.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="max_participants" class="form-label">მაქსიმალური მონაწილეების რაოდენობა</label>
+                        <select class="form-select" id="max_participants" name="max_participants">
+                            <option value="4">4 მონაწილე</option>
+                            <option value="6">6 მონაწილე</option>
+                            <option value="8">8 მონაწილე</option>
+                            <option value="10" selected>10 მონაწილე</option>
+                            <option value="15">15 მონაწილე</option>
+                            <option value="20">20 მონაწილე</option>
+                        </select>
+                        <div class="form-text">მიუთითეთ მაქს. რაოდენობა მონაწილეების, რომლებსაც შეუძლიათ შეუერთდნენ ამ ჯგუფს.</div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> ჯგუფის შექმნის შემდეგ, მიიღებთ უნიკალურ კოდს, რომელიც შეგიძლიათ გაუზიაროთ სხვებს ჯგუფში შესამოსაერთებლად.
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">ჯგუფის შექმნა</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

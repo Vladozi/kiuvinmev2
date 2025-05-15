@@ -1,0 +1,478 @@
+{% extends 'base.html' %}
+
+{% block title %}KIUVINME V2 - ჩატები{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-card {
+        transition: transform 0.3s;
+        margin-bottom: 20px;
+        cursor: pointer;
+    }
+    
+    .chat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .chat-type {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+    }
+    
+    .chat-type-general {
+        background-color: #4e73df;
+        color: white;
+    }
+    
+    .chat-type-department {
+        background-color: #1cc88a;
+        color: white;
+    }
+    
+    .chat-type-private {
+        background-color: #f6c23e;
+        color: white;
+    }
+    
+    .chat-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        color: #4e73df;
+    }
+    
+    .chat-description {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 15px;
+    }
+    
+    .chat-members {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .selected-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 10;
+        background-color: #1cc88a;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+    }
+    
+    .inactive-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-weight: bold;
+        z-index: 5;
+    }
+    
+    .create-chat-card {
+        border: 2px dashed #e3e6f0;
+        background-color: #f8f9fc;
+        text-align: center;
+    }
+    
+    .create-chat-card:hover {
+        border-color: #4e73df;
+        background-color: #f1f3fa;
+    }
+    
+    .action-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 15px;
+    }
+    
+    @media (max-width: 768px) {
+        .action-buttons {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .action-buttons .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">მთავარი</a></li>
+                <li class="breadcrumb-item active" aria-current="page">ჩატები</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- General Chat Card -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title">ჩატები</h3>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> 
+                    <strong>წესები:</strong> ზოგად ჩატში ყველა შეიძლება შევიდეს. თუმცა, სპეციალიზირებული კატეგორიის ჩატებიდან მხოლოდ ერთში შეგიძლიათ შესვლა. პირად ჩატებში შესვლა შეზღუდული არ არის.
+                </div>
+                
+                <div class="row">
+                    <!-- General Chat -->
+                    <div class="col-md-4">
+                        <div class="card chat-card">
+                            <div class="card-body">
+                                <span class="chat-type chat-type-general">ზოგადი</span>
+                                <div class="chat-icon">
+                                    <i class="fas fa-comments"></i>
+                                </div>
+                                <h5 class="chat-card-title">{{ global_room.name }}</h5>
+                                <div class="chat-description">
+                                    {{ global_room.description }}
+                                </div>
+                                <div class="chat-members">
+                                    <i class="fas fa-users"></i> {{ global_room.participants.count() }} მომხმარებელი
+                                </div>
+                                <div class="action-buttons">
+                                    <a href="{{ url_for('chatting_room', room_code=global_room.code) }}" class="btn btn-primary">
+                                        <i class="fas fa-sign-in-alt"></i> შესვლა
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Department Chats Card -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h3 class="card-title">კატეგორიები</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% set user_dept_chat = namespace(exists=false, code='') %}
+                    {% for participant in current_user.chatroom_participants %}
+                        {% if participant.chatroom.is_department and participant.chatroom.code != 'GLOBAL' %}
+                            {% set user_dept_chat.exists = true %}
+                            {% set user_dept_chat.code = participant.chatroom.code %}
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% for department in department_rooms %}
+                        <div class="col-md-4">
+                            {% if user_dept_chat.exists and department.code == user_dept_chat.code %}
+                                <div class="card chat-card">
+                                    <div class="card-body">
+                                        <span class="selected-badge">არჩეული</span>
+                                        <span class="chat-type chat-type-department">კატეგორია</span>
+                                        <div class="chat-icon">
+                                            {% if department.name == 'კომპიუტერული მეცნიერება' %}
+                                                <i class="fas fa-laptop-code"></i>
+                                            {% elif department.name == 'მენეჯმენტი' %}
+                                                <i class="fas fa-chart-line"></i>
+                                            {% elif department.name == 'მათემატიკა' %}
+                                                <i class="fas fa-square-root-alt"></i>
+                                            {% elif department.name == 'მათემატიკა & გამოყენებები' %}
+                                                <i class="fas fa-calculator"></i>
+                                            {% elif department.name == 'სამართალთმცოდნეობა' %}
+                                                <i class="fas fa-gavel"></i>
+                                            {% elif department.name == 'ფსიქოლოგია' %}
+                                                <i class="fas fa-brain"></i>
+                                            {% elif department.name == 'მედიცინა' %}
+                                                <i class="fas fa-heartbeat"></i>
+                                            {% elif department.name == 'დიზაინი' %}
+                                                <i class="fas fa-pencil-ruler"></i>
+                                            {% else %}
+                                                <i class="fas fa-book"></i>
+                                            {% endif %}
+                                        </div>
+                                        <h5 class="chat-card-title">{{ department.name }}</h5>
+                                        <div class="chat-description">
+                                            {{ department.description }}
+                                        </div>
+                                        <div class="chat-members">
+                                            <i class="fas fa-users"></i> {{ department.participants.count() }} მომხმარებელი
+                                        </div>
+                                        
+                                        <div class="action-buttons">
+                                            <a href="{{ url_for('chatting_room', room_code=department.code) }}" class="btn btn-primary">
+                                                <i class="fas fa-sign-in-alt"></i> შესვლა
+                                            </a>
+                                            <a href="{{ url_for('leave_chatroom', room_code=department.code) }}" class="btn btn-danger" 
+                                               onclick="return confirm('დარწმუნებული ხართ, რომ გსურთ ამ ჩატის დატოვება?');">
+                                                <i class="fas fa-sign-out-alt"></i> დატოვება
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% elif not user_dept_chat.exists %}
+                                <div class="card chat-card">
+                                    <div class="card-body">
+                                        <span class="chat-type chat-type-department">კატეგორია</span>
+                                        <div class="chat-icon">
+                                            {% if department.name == 'კომპიუტერული მეცნიერება' %}
+                                                <i class="fas fa-laptop-code"></i>
+                                            {% elif department.name == 'მენეჯმენტი' %}
+                                                <i class="fas fa-chart-line"></i>
+                                            {% elif department.name == 'მათემატიკა' %}
+                                                <i class="fas fa-square-root-alt"></i>
+                                            {% elif department.name == 'მათემატიკა & გამოყენებები' %}
+                                                <i class="fas fa-calculator"></i>
+                                            {% elif department.name == 'სამართალთმცოდნეობა' %}
+                                                <i class="fas fa-gavel"></i>
+                                            {% elif department.name == 'ფსიქოლოგია' %}
+                                                <i class="fas fa-brain"></i>
+                                            {% elif department.name == 'მედიცინა' %}
+                                                <i class="fas fa-heartbeat"></i>
+                                            {% elif department.name == 'დიზაინი' %}
+                                                <i class="fas fa-pencil-ruler"></i>
+                                            {% else %}
+                                                <i class="fas fa-book"></i>
+                                            {% endif %}
+                                        </div>
+                                        <h5 class="chat-card-title">{{ department.name }}</h5>
+                                        <div class="chat-description">
+                                            {{ department.description }}
+                                        </div>
+                                        <div class="chat-members">
+                                            <i class="fas fa-users"></i> {{ department.participants.count() }} მომხმარებელი
+                                        </div>
+                                        
+                                        <div class="action-buttons">
+                                            <a href="{{ url_for('join_department_chat', room_code=department.code) }}" class="btn btn-success">
+                                                <i class="fas fa-plus"></i> არჩევა
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="card chat-card">
+                                    <div class="inactive-overlay">
+                                        მხოლოდ ერთი კატეგორია შეგიძლიათ აირჩიოთ
+                                    </div>
+                                    <div class="card-body" style="opacity: 0.6;">
+                                        <span class="chat-type chat-type-department">კატეგორია</span>
+                                        <div class="chat-icon">
+                                            {% if department.name == 'კომპიუტერული მეცნიერება' %}
+                                                <i class="fas fa-laptop-code"></i>
+                                            {% elif department.name == 'მენეჯმენტი' %}
+                                                <i class="fas fa-chart-line"></i>
+                                            {% elif department.name == 'მათემატიკა' %}
+                                                <i class="fas fa-square-root-alt"></i>
+                                            {% elif department.name == 'მათემატიკა & გამოყენებები' %}
+                                                <i class="fas fa-calculator"></i>
+                                            {% elif department.name == 'სამართალთმცოდნეობა' %}
+                                                <i class="fas fa-gavel"></i>
+                                            {% elif department.name == 'ფსიქოლოგია' %}
+                                                <i class="fas fa-brain"></i>
+                                            {% elif department.name == 'მედიცინა' %}
+                                                <i class="fas fa-heartbeat"></i>
+                                            {% elif department.name == 'დიზაინი' %}
+                                                <i class="fas fa-pencil-ruler"></i>
+                                            {% else %}
+                                                <i class="fas fa-book"></i>
+                                            {% endif %}
+                                        </div>
+                                        <h5 class="chat-card-title">{{ department.name }}</h5>
+                                        <div class="chat-description">
+                                            {{ department.description }}
+                                        </div>
+                                        <div class="chat-members">
+                                            <i class="fas fa-users"></i> {{ department.participants.count() }} მომხმარებელი
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Private Chats Card -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h3 class="card-title">პირადი ჩატები</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Create New Private Chat Card -->
+                    <div class="col-md-4">
+                        <div class="card chat-card create-chat-card" data-bs-toggle="modal" data-bs-target="#createChatModal">
+                            <div class="card-body">
+                                <div class="chat-icon">
+                                    <i class="fas fa-plus-circle"></i>
+                                </div>
+                                <h5 class="chat-card-title">ახალი პირადი ჩატი</h5>
+                                <div class="chat-description">
+                                    შექმენით ახალი პირადი ჩატი და მოიწვიეთ მეგობრები
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Join Private Chat Card -->
+                    <div class="col-md-4">
+                        <div class="card chat-card create-chat-card" data-bs-toggle="modal" data-bs-target="#joinChatModal">
+                            <div class="card-body">
+                                <div class="chat-icon">
+                                    <i class="fas fa-sign-in-alt"></i>
+                                </div>
+                                <h5 class="chat-card-title">ჩატში შესვლა</h5>
+                                <div class="chat-description">
+                                    შედით არსებულ პირად ჩატში კოდის გამოყენებით
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- List existing private chats -->
+                    {% for room in private_rooms_created %}
+                        <div class="col-md-4">
+                            <div class="card chat-card">
+                                <div class="card-body">
+                                    <span class="chat-type chat-type-private">პირადი</span>
+                                    <div class="chat-icon">
+                                        <i class="fas fa-lock"></i>
+                                    </div>
+                                    <h5 class="chat-card-title">{{ room.name }}</h5>
+                                    <div class="chat-description">
+                                        {{ room.description }}
+                                    </div>
+                                    <div class="chat-members">
+                                        <i class="fas fa-users"></i> {{ room.participants.count() }} მომხმარებელი
+                                    </div>
+                                    <div class="chat-members">
+                                        <i class="fas fa-key"></i> კოდი: {{ room.code }}
+                                    </div>
+                                    <div class="action-buttons">
+                                        <a href="{{ url_for('chatting_room', room_code=room.code) }}" class="btn btn-primary">
+                                            <i class="fas fa-sign-in-alt"></i> შესვლა
+                                        </a>
+                                        <a href="{{ url_for('manage_chatroom', room_code=room.code) }}" class="btn btn-warning">
+                                            <i class="fas fa-cog"></i> მართვა
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                    {% for room in private_rooms_joined %}
+                        <div class="col-md-4">
+                            <div class="card chat-card">
+                                <div class="card-body">
+                                    <span class="chat-type chat-type-private">პირადი</span>
+                                    <div class="chat-icon">
+                                        <i class="fas fa-lock"></i>
+                                    </div>
+                                    <h5 class="chat-card-title">{{ room.name }}</h5>
+                                    <div class="chat-description">
+                                        {{ room.description }}
+                                    </div>
+                                    <div class="chat-members">
+                                        <i class="fas fa-users"></i> {{ room.participants.count() }} მომხმარებელი
+                                    </div>
+                                    <div class="action-buttons">
+                                        <a href="{{ url_for('chatting_room', room_code=room.code) }}" class="btn btn-primary">
+                                            <i class="fas fa-sign-in-alt"></i> შესვლა
+                                        </a>
+                                        <a href="{{ url_for('leave_chatroom', room_code=room.code) }}" class="btn btn-danger"
+                                           onclick="return confirm('დარწმუნებული ხართ, რომ გსურთ ამ ჩატის დატოვება?');">
+                                            <i class="fas fa-sign-out-alt"></i> დატოვება
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Private Chat Modal -->
+<div class="modal fade" id="createChatModal" tabindex="-1" aria-labelledby="createChatModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createChatModalLabel">ახალი პირადი ჩატის შექმნა</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="create-chat-form" method="post" action="{{ url_for('create_chatroom') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="room_name" class="form-label">ჩატის სახელი</label>
+                        <input type="text" class="form-control" id="room_name" name="room_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">აღწერა (არააუცილებელი)</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">გაუქმება</button>
+                    <button type="submit" class="btn btn-primary">შექმნა</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Join Private Chat Modal -->
+<div class="modal fade" id="joinChatModal" tabindex="-1" aria-labelledby="joinChatModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="joinChatModalLabel">პირად ჩატში შესვლა</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="join-chat-form" method="post" action="{{ url_for('join_chatroom') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="room_code" class="form-label">ჩატის კოდი</label>
+                        <input type="text" class="form-control" id="room_code" name="room_code" required 
+                               maxlength="6" minlength="6" placeholder="შეიყვანეთ 6-ნიშნა კოდი">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">გაუქმება</button>
+                    <button type="submit" class="btn btn-primary">შესვლა</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

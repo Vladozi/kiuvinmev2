@@ -4,15 +4,19 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-
 class Config:
     # Flask configurations
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-key-change-in-production')
     DEBUG = False
     TESTING = False
 
-    # Database configurations
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URI', 'sqlite:///videochat.db')
+    # Database configurations - prioritize DATABASE_URL for cloud providers
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', os.environ.get('DATABASE_URI', 'sqlite:///videochat.db'))
+    
+    # Handle Postgres connection URL format for SQLAlchemy
+    if SQLALCHEMY_DATABASE_URI and SQLALCHEMY_DATABASE_URI.startswith("postgres://"):
+        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace("postgres://", "postgresql://", 1)
+    
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Flask-SocketIO configurations
@@ -40,7 +44,7 @@ class TestingConfig(Config):
 class ProductionConfig(Config):
     # In production, ensure all these are set via environment variables
     SECRET_KEY = os.environ.get('SECRET_KEY')
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URI')
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', os.environ.get('DATABASE_URI'))
     SOCKETIO_CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ORIGINS', '*')
 
     # Production security settings

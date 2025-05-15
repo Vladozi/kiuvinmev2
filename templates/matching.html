@@ -22,6 +22,17 @@
     .hidden {
         display: none;
     }
+
+    .countdown {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-top: 10px;
+    }
+
+    .queue-position {
+        margin-top: 15px;
+        font-style: italic;
+    }
 </style>
 {% endblock %}
 
@@ -38,15 +49,18 @@
                         <span class="visually-hidden">იტვირთება...</span>
                     </div>
                     <h3>გთხოვთ დაელოდეთ</h3>
-                    <p>ცოტა ხანიც... Daily remainder of Z = 9 + 1 </p>
+                    <p>ვეძებთ პარტნიორს თქვენთვის...</p>
+                    <div class="countdown" id="searching-time">00:00</div>
+                    <div class="queue-position" id="queue-position">მიმდინარეობს დაკავშირება...</div>
                     <a href="{{ url_for('index') }}" class="btn btn-secondary cancel-btn">გაუქმება</a>
                 </div>
                 
                 <div id="match-found" class="matching-container hidden">
                     <div class="alert alert-success">
                         <h3>ეგაა! ძლივს</h3>
-                        <p>ვუკავშირდებით...</p>
+                        <p>ვუკავშირდებით <span id="partner-name"></span>...</p>
                     </div>
+                    <div class="countdown" id="connect-countdown">5</div>
                 </div>
             </div>
         </div>
@@ -60,8 +74,47 @@
         const socket = io();
         const matchingContainer = document.getElementById('matching-container');
         const matchFoundContainer = document.getElementById('match-found');
+        const partnerNameSpan = document.getElementById('partner-name');
+        const searchingTimeDiv = document.getElementById('searching-time');
+        const queuePositionDiv = document.getElementById('queue-position');
+        const connectCountdownDiv = document.getElementById('connect-countdown');
+        
+        let searchStartTime = Date.now();
+        let searchTimer;
+        let connectCountdown;
+        
+        // Update the searching time counter
+        function updateSearchTime() {
+            const elapsedSeconds = Math.floor((Date.now() - searchStartTime) / 1000);
+            const minutes = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0');
+            const seconds = (elapsedSeconds % 60).toString().padStart(2, '0');
+            searchingTimeDiv.textContent = `${minutes}:${seconds}`;
+        }
+        
+        // Start the search timer
+        searchTimer = setInterval(updateSearchTime, 1000);
+        
+        // Request queue position update every 5 seconds
+        setInterval(() => {
+            fetch('/debug/waiting')
+                .then(response => response.json())
+                .then(data => {
+                    const waitingUsers = data.waiting_users;
+                    const position = waitingUsers.indexOf({{current_user.id}});
+                    
+                    if (position >= 0) {
+                        queuePositionDiv.textContent = `მოლოდინის რიგში: ${position + 1} / ${waitingUsers.length}`;
+                    } else {
+                        queuePositionDiv.textContent = `ველოდებით პარტნიორს...`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking queue position:', error);
+                });
+        }, 5000);
         
         // Join the matching queue
+        console.log('Emitting join_queue event');
         socket.emit('join_queue', {
             username: "{{ current_user.username }}"
         });
@@ -70,14 +123,36 @@
         socket.on('match_found', (data) => {
             console.log('Match found:', data);
             
+            // Stop the search timer
+            clearInterval(searchTimer);
+            
+            // Update partner name
+            partnerNameSpan.textContent = data.partner;
+            
             // Show match found message
             matchingContainer.classList.add('hidden');
             matchFoundContainer.classList.remove('hidden');
             
-            // Redirect to chat room after a short delay
-            setTimeout(() => {
-                window.location.href = `/chat/${data.chat_id}`;
-            }, 1500);
+            // Countdown before redirect
+            let countdown = 5;
+            connectCountdownDiv.textContent = countdown;
+            
+            connectCountdown = setInterval(() => {
+                countdown--;
+                connectCountdownDiv.textContent = countdown;
+                
+                if (countdown <= 0) {
+                    clearInterval(connectCountdown);
+                    // Redirect to chat room
+                    window.location.href = `/chat/${data.chat_id}`;
+                }
+            }, 1000);
+        });
+        
+        // Handle page leave
+        window.addEventListener('beforeunload', () => {
+            clearInterval(searchTimer);
+            clearInterval(connectCountdown);
         });
     });
 </script>

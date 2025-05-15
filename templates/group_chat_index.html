@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+
+{% block title %}KIUVINME V2 - Group Chat{% endblock %}
+
+{% block extra_css %}
+<style>
+    .room-card {
+        transition: transform 0.3s;
+        margin-bottom: 15px;
+    }
+    
+    .room-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .option-card {
+        text-align: center;
+        padding: 30px;
+        margin-bottom: 20px;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+    
+    .option-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .option-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        color: #4e73df;
+    }
+    
+    .badge-pill {
+        border-radius: 50px;
+        padding: 5px 10px;
+    }
+    
+    .room-action {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        line-height: 30px;
+        text-align: center;
+        border-radius: 50%;
+        margin-left: 5px;
+        transition: all 0.2s;
+    }
+    
+    .room-action:hover {
+        background-color: rgba(0,0,0,0.1);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6c757d;
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+    
+    /* Added styles for delete button */
+    .btn-group {
+        display: flex;
+        gap: 5px;
+    }
+    
+    .btn-delete {
+        background-color: #e74a3b;
+        color: white;
+    }
+    
+    .btn-delete:hover {
+        background-color: #d52a1a;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">მთავარი</a></li>
+                <li class="breadcrumb-item active" aria-current="page">ჯგუფური ჩათი</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card option-card" data-url="{{ url_for('create_room') }}">
+            <div class="option-icon">
+                <i class="fas fa-plus-circle"></i>
+            </div>
+            <h3>ჯგუფის შექმნა</h3>
+            <p class="text-muted">შექმენი ახალი ჯგუფური ვიდეო ჩათი</p>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card option-card" data-url="{{ url_for('join_room_page') }}">
+            <div class="option-icon">
+                <i class="fas fa-sign-in-alt"></i>
+            </div>
+            <h3>ჯგუფში შესვლა</h3>
+            <p class="text-muted">შეუერთდი არსებულ ჯგუფურ ჩათს კოდით</p>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h3 class="card-title mb-0">ჩემი ჯგუფები</h3>
+                <span class="badge bg-light text-primary">{{ hosted_rooms|length }}</span>
+            </div>
+            <div class="card-body">
+                {% if hosted_rooms %}
+                    {% for room in hosted_rooms %}
+                        <div class="card room-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="card-title mb-1">{{ room.name }}</h5>
+                                        <p class="text-muted mb-0">
+                                            <small>კოდი: {{ room.id }}</small>
+                                        </p>
+                                    </div>
+                                    <div class="btn-group">
+                                        <span class="badge bg-success badge-pill">
+                                            <i class="fas fa-users"></i> 
+                                            {{ room.participants.filter_by(is_active=true).count() }}/{{ room.max_participants }}
+                                        </span>
+                                        <a href="{{ url_for('room', room_id=room.id) }}" class="btn btn-primary btn-sm">
+                                            შესვლა
+                                        </a>
+                                        <a href="{{ url_for('delete_room', room_id=room.id) }}" 
+                                           onclick="return confirm('დარწმუნებული ხართ, რომ გსურთ ამ ჯგუფის წაშლა?');"
+                                           class="btn btn-delete btn-sm">
+                                            <i class="fas fa-trash"></i> წაშლა
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-users-slash"></i>
+                        </div>
+                        <h5>ჯერ არ შეგიქმნია ჯგუფები</h5>
+                        <p>შექმენი ახალი ჯგუფი "ჯგუფის შექმნა" ღილაკით</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h3 class="card-title mb-0">შემოერთებული ჯგუფები</h3>
+                <span class="badge bg-light text-primary">{{ participated_rooms|length }}</span>
+            </div>
+            <div class="card-body">
+                {% if participated_rooms %}
+                    {% for room in participated_rooms %}
+                        {% if room.host_id != current_user.id %}
+                            <div class="card room-card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h5 class="card-title mb-1">{{ room.name }}</h5>
+                                            <p class="text-muted mb-0">
+                                                <small>მასპინძელი: {{ room.host.username }}</small>
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <span class="badge bg-success badge-pill">
+                                                <i class="fas fa-users"></i> 
+                                                {{ room.participants.filter_by(is_active=true).count() }}/{{ room.max_participants }}
+                                            </span>
+                                            <a href="{{ url_for('room', room_id=room.id) }}" class="btn btn-primary btn-sm ms-2">
+                                                შესვლა
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-door-closed"></i>
+                        </div>
+                        <h5>ჯერ არ შესულხარ ჯგუფებში</h5>
+                        <p>შეუერთდი ჯგუფს კოდით "ჯგუფში შესვლა" ღილაკით</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Redirect to the selected option on click
+    document.querySelectorAll('.option-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const url = card.getAttribute('data-url');
+            if (url) {
+                window.location.href = url;
+            }
+        });
+    });
+</script>
+{% endblock %}

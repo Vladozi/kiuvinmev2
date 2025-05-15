@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}KIUVINME V2 - Join Room{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 20px;
+        color: #4e73df;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    
+    .back-link:hover {
+        color: #2e59d9;
+    }
+    
+    .back-link i {
+        margin-right: 5px;
+    }
+    
+    .room-code-input {
+        letter-spacing: 0.5em;
+        text-align: center;
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <a href="{{ url_for('group_chat_index') }}" class="back-link">
+            <i class="fas fa-arrow-left"></i> უკან დაბრუნება
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card form-card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title">ჯგუფურ ჩათში შესვლა</h3>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <div class="mb-4 text-center">
+                        <p>შეიყვანეთ 6-ციფრიანი კოდი, რომელიც მოგაწოდეს ჯგუფის შესაქმნელად</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="room_code" class="form-label">ჯგუფის კოდი</label>
+                        <input type="text" class="form-control room-code-input" id="room_code" name="room_code" 
+                               maxlength="6" minlength="6" placeholder="XXXXXX" required>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> ჯგუფის კოდი უნდა იყოს 6 სიმბოლო. კოდები არის case-sensitive.
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">ჯგუფში შესვლა</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Format and validate room code input
+    const roomCodeInput = document.getElementById('room_code');
+    
+    roomCodeInput.addEventListener('input', function() {
+        // Convert to uppercase
+        this.value = this.value.toUpperCase();
+        
+        // Remove non-alphanumeric characters
+        this.value = this.value.replace(/[^A-Z0-9]/g, '');
+    });
+</script>
+{% endblock %}

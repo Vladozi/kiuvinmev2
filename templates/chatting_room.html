@@ -1,0 +1,909 @@
+{% extends 'base.html' %}
+
+{% block title %}KIUVINME V2 - {{ room.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        height: 600px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .chat-header {
+        padding: 15px;
+        border-bottom: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .chat-header-title {
+        display: flex;
+        align-items: center;
+    }
+    
+    .chat-type-badge {
+        margin-left: 10px;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+    }
+    
+    .chat-type-general {
+        background-color: #4e73df;
+        color: white;
+    }
+    
+    .chat-type-department {
+        background-color: #1cc88a;
+        color: white;
+    }
+    
+    .chat-type-private {
+        background-color: #f6c23e;
+        color: white;
+    }
+    
+    .chat-participants {
+        margin-right: 10px;
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .chat-body {
+        flex-grow: 1;
+        display: flex;
+    }
+    
+    .chat-messages-container {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid #dee2e6;
+    }
+    
+    .chat-messages {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 15px;
+        background-color: #fff;
+    }
+    
+    .chat-message {
+        margin-bottom: 15px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .chat-message-self {
+        align-items: flex-end;
+    }
+    
+    .chat-message-other {
+        align-items: flex-start;
+    }
+    
+    .chat-message-system {
+        align-items: center;
+    }
+    
+    .message-bubble {
+        padding: 10px 15px;
+        border-radius: 18px;
+        max-width: 70%;
+        position: relative;
+    }
+    
+    .message-bubble-self {
+        background-color: #d1ecf1;
+        border-bottom-right-radius: 5px;
+    }
+    
+    .message-bubble-other {
+        background-color: #e2e3e5;
+        border-bottom-left-radius: 5px;
+    }
+    
+    .message-bubble-system {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        max-width: 90%;
+        text-align: center;
+        font-style: italic;
+        font-size: 0.9rem;
+    }
+    
+    .message-sender {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-bottom: 3px;
+    }
+    
+    .message-time {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 3px;
+        margin-left: 5px;
+    }
+    
+    .message-content {
+        word-wrap: break-word;
+    }
+    
+    .chat-input-container {
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+    }
+    
+    .chat-input-form {
+        display: flex;
+        align-items: center;
+    }
+    
+    .chat-input {
+        flex-grow: 1;
+        border-radius: 20px;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    .chat-input:focus {
+        box-shadow: none;
+        border-color: #4e73df;
+    }
+    
+    .chat-submit {
+        margin-left: 10px;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+    }
+    
+    .participants-sidebar {
+        width: 250px;
+        border-left: 1px solid #dee2e6;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .participants-header {
+        padding: 15px;
+        border-bottom: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+    }
+    
+    .participants-header h5 {
+        margin-bottom: 0;
+    }
+    
+    .participants-list {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 0;
+    }
+    
+    .participant-item {
+        padding: 10px 15px;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .participant-item:last-child {
+        border-bottom: none;
+    }
+    
+    .participant-info {
+        display: flex;
+        align-items: center;
+    }
+    
+    .participant-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: #4e73df;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+        font-weight: bold;
+    }
+    
+    .admin-badge {
+        background-color: #4e73df;
+        color: white;
+        font-size: 0.7rem;
+        padding: 2px 5px;
+        border-radius: 3px;
+        margin-left: 5px;
+    }
+    
+    .participant-actions button {
+        background: none;
+        border: none;
+        color: #6c757d;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    
+    .participant-actions button:hover {
+        color: #4e73df;
+    }
+    
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 20px;
+        color: #4e73df;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    
+    .back-link:hover {
+        color: #2e59d9;
+    }
+    
+    .back-link i {
+        margin-right: 5px;
+    }
+    
+    .chat-info {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .chat-info-item {
+        margin-bottom: 10px;
+    }
+    
+    .chat-info-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .chat-invite-code {
+        font-family: monospace;
+        background-color: #e9ecef;
+        padding: 5px 10px;
+        border-radius: 4px;
+        display: inline-block;
+    }
+    
+    .copy-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #4e73df;
+        transition: color 0.2s;
+    }
+    
+    .copy-btn:hover {
+        color: #2e59d9;
+    }
+    
+    @media (max-width: 992px) {
+        .chat-body {
+            flex-direction: column;
+        }
+        
+        .chat-messages-container {
+            border-right: none;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .participants-sidebar {
+            width: 100%;
+            border-left: none;
+        }
+        
+        .chat-container {
+            height: auto;
+        }
+        
+        .chat-messages {
+            height: 400px;
+        }
+        
+        .participants-list {
+            max-height: 200px;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .chat-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .chat-participants {
+            margin-top: 10px;
+            margin-right: 0;
+        }
+        
+        .message-bubble {
+            max-width: 85%;
+        }
+    }
+    
+    /* Mobile toggle for participants sidebar */
+    .toggle-participants-btn {
+        display: none;
+        margin-left: 10px;
+    }
+    
+    @media (max-width: 992px) {
+        .toggle-participants-btn {
+            display: inline-block;
+        }
+        
+        .participants-sidebar {
+            display: none;
+        }
+        
+        .participants-sidebar.show {
+            display: flex;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <a href="{{ url_for('chatting_index') }}" class="back-link">
+            <i class="fas fa-arrow-left"></i> უკან დაბრუნება
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title">{{ room.name }}</h3>
+            </div>
+            <div class="card-body p-0">
+                <!-- Chat info section -->
+                <div class="chat-info m-3">
+                    {% if room.is_private %}
+                        <div class="chat-info-item">
+                            <strong>ტიპი:</strong> 
+                            <span class="chat-type-badge chat-type-private">პირადი</span>
+                        </div>
+                        <div class="chat-info-item">
+                            <strong>მოსაწვევი კოდი:</strong> 
+                            <span class="chat-invite-code">{{ room.code }}</span>
+                            <button class="copy-btn" id="copy-invite-code" title="კოდის კოპირება">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    {% elif room.code == 'GLOBAL' %}
+                        <div class="chat-info-item">
+                            <strong>ტიპი:</strong> 
+                            <span class="chat-type-badge chat-type-general">ზოგადი</span>
+                        </div>
+                    {% else %}
+                        <div class="chat-info-item">
+                            <strong>ტიპი:</strong> 
+                            <span class="chat-type-badge chat-type-department">კატეგორია</span>
+                        </div>
+                        <div class="chat-info-item">
+                            <strong>დეპარტამენტი:</strong> {{ room.department }}
+                        </div>
+                    {% endif %}
+                    <div class="chat-info-item">
+                        <strong>აღწერა:</strong> {{ room.description }}
+                    </div>
+                    {% if is_admin %}
+                        <div class="chat-info-item text-end">
+                            <a href="{{ url_for('manage_chatroom', room_code=room.code) }}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-cog"></i> ჩატის მართვა
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Chat interface -->
+                <div class="chat-container">
+                    <div class="chat-header">
+                        <div class="chat-header-title">
+                            <h5 class="mb-0">{{ room.name }}</h5>
+                            {% if room.code == 'GLOBAL' %}
+                                <span class="chat-type-badge chat-type-general">ზოგადი</span>
+                            {% elif room.is_department %}
+                                <span class="chat-type-badge chat-type-department">კატეგორია</span>
+                            {% else %}
+                                <span class="chat-type-badge chat-type-private">პირადი</span>
+                            {% endif %}
+                        </div>
+                        <div class="chat-participants">
+                            <i class="fas fa-users"></i> {{ participants|length }} მონაწილე
+                            <button class="btn btn-sm btn-outline-primary toggle-participants-btn" id="toggle-participants">
+                                <i class="fas fa-user-friends"></i> მონაწილეების ჩვენება
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chat-body">
+                        <div class="chat-messages-container">
+                            <div class="chat-messages" id="chat-messages">
+                                {% for message in messages %}
+                                    <div class="chat-message {% if message.user_id == current_user.id %}chat-message-self{% else %}chat-message-other{% endif %}">
+                                        {% if message.user_id != current_user.id %}
+                                            <div class="message-sender">{{ message.user.username }}</div>
+                                        {% endif %}
+                                        <div class="message-bubble {% if message.user_id == current_user.id %}message-bubble-self{% else %}message-bubble-other{% endif %}">
+                                            <div class="message-content">{{ message.message }}</div>
+                                            <div class="message-time">{{ (message.created_at|float)|datetime('%H:%M') }}</div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <div class="chat-input-container">
+                                <form class="chat-input-form" id="chat-form">
+                                    <input type="text" class="form-control chat-input" id="chat-input" placeholder="შეიყვანეთ ტექსტი...">
+                                    <button type="submit" class="btn btn-primary chat-submit" id="send-message">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="participants-sidebar" id="participants-sidebar">
+                            <div class="participants-header">
+                                <h5>მონაწილეები</h5>
+                            </div>
+                            <div class="participants-list">
+                                {% for participant in participants %}
+                                    <div class="participant-item">
+                                        <div class="participant-info">
+                                            <div class="participant-avatar">
+                                                {{ participant.username|upper|truncate(1, true, '') }}
+                                            </div>
+                                            <div>
+                                                {{ participant.username }}
+                                                {% if participant.is_admin %}
+                                                    <span class="admin-badge">ადმინი</span>
+                                                {% endif %}
+                                                {% if participant.id == current_user.id %}
+                                                    <span class="text-muted">(თქვენ)</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% if is_admin and participant.id != current_user.id %}
+                                            <div class="participant-actions">
+                                                <button class="make-admin-btn" data-user-id="{{ participant.id }}" title="ადმინის მინიჭება">
+                                                    <i class="fas fa-user-shield"></i>
+                                                </button>
+                                                <button class="remove-user-btn" data-user-id="{{ participant.id }}" title="ამოშლა">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Remove User Modal -->
+<div class="modal fade" id="confirmRemoveModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">მომხმარებლის ამოშლა</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>დარწმუნებული ხართ, რომ გსურთ <span id="remove-username"></span>-ის ამოშლა?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">გაუქმება</button>
+                <button type="button" class="btn btn-danger" id="confirm-remove-btn">ამოშლა</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Make Admin Modal -->
+<div class="modal fade" id="confirmAdminModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ადმინისტრატორის მინიჭება</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>დარწმუნებული ხართ, რომ გსურთ <span id="admin-username"></span>-ისთვის ადმინის უფლებების მინიჭება?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">გაუქმება</button>
+                <button type="button" class="btn btn-success" id="confirm-admin-btn">მინიჭება</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+
+<!-- Store room data in a data attribute -->
+<div id="room-data" 
+     data-room-code="{{ room.code }}"
+     data-user-id="{{ current_user.id }}"
+     data-username="{{ current_user.username }}"
+     data-is-admin="{{ is_admin|int }}">
+</div>
+
+<script>
+// Initialize Socket.IO connection
+document.addEventListener('DOMContentLoaded', function() {
+    const socket = io();
+    
+    // Cache DOM elements
+    const chatMessages = document.getElementById('chat-messages');
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('chat-input');
+    const sendMessageBtn = document.getElementById('send-message');
+    const copyInviteBtn = document.getElementById('copy-invite-code');
+    const participantsSidebar = document.getElementById('participants-sidebar');
+    const toggleParticipantsBtn = document.getElementById('toggle-participants');
+    
+    // Get room data from the data attribute
+    const roomDataEl = document.getElementById('room-data');
+    if (!roomDataEl) {
+        console.error('Room data element not found');
+        return;
+    }
+    
+    const ROOM_CODE = roomDataEl.getAttribute('data-room-code');
+    const USER_ID = parseInt(roomDataEl.getAttribute('data-user-id'));
+    const USERNAME = roomDataEl.getAttribute('data-username');
+    const IS_ADMIN = roomDataEl.getAttribute('data-is-admin') === '1';
+    
+    // Join the chatroom
+    socket.emit('join_chatroom', { room_code: ROOM_CODE });
+    
+    // Listen for participants update
+    socket.on('chatroom_participants', function(data) {
+        updateParticipantsUI(data.participants);
+    });
+    
+    // Listen for chat messages
+    socket.on('chatroom_message', function(data) {
+        addMessageToChat(data);
+        
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
+    
+    // Listen for user kicked event
+    socket.on('kicked_from_chatroom', function(data) {
+        if (data.room_code === ROOM_CODE) {
+            alert('თქვენ გაგაძევეს ჩატიდან');
+            window.location.href = '/chatting';
+        }
+    });
+    
+    // Send message on form submit
+    if (chatForm) {
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            sendMessage();
+        });
+    }
+    
+    // Send message on button click
+    if (sendMessageBtn) {
+        sendMessageBtn.addEventListener('click', function() {
+            sendMessage();
+        });
+    }
+    
+    // Function to send a message
+    function sendMessage() {
+        if (!chatInput) return;
+        
+        const message = chatInput.value.trim();
+        if (message) {
+            socket.emit('send_chatroom_message', {
+                room_code: ROOM_CODE,
+                message: message
+            });
+            
+            chatInput.value = '';
+            chatInput.focus();
+        }
+    }
+    
+    // Copy invite code button
+    if (copyInviteBtn) {
+        copyInviteBtn.addEventListener('click', function() {
+            const inviteCode = ROOM_CODE;
+            
+            navigator.clipboard.writeText(inviteCode)
+                .then(function() {
+                    copyInviteBtn.innerHTML = '<i class="fas fa-check"></i>';
+                    setTimeout(function() {
+                        copyInviteBtn.innerHTML = '<i class="fas fa-copy"></i>';
+                    }, 2000);
+                })
+                .catch(function(err) {
+                    console.error('Failed to copy code: ', err);
+                    alert('კოდის კოპირება ვერ მოხერხდა');
+                });
+        });
+    }
+    
+    // Toggle participants sidebar on mobile
+    if (toggleParticipantsBtn && participantsSidebar) {
+        toggleParticipantsBtn.addEventListener('click', function() {
+            participantsSidebar.classList.toggle('show');
+            
+            // Update button text based on visibility
+            if (participantsSidebar.classList.contains('show')) {
+                toggleParticipantsBtn.innerHTML = '<i class="fas fa-times"></i> დამალვა';
+            } else {
+                toggleParticipantsBtn.innerHTML = '<i class="fas fa-user-friends"></i> მონაწილეების ჩვენება';
+            }
+        });
+    }
+    
+    // Initialize Bootstrap modals if they exist
+    const confirmRemoveModal = document.getElementById('confirmRemoveModal') ? 
+                             new bootstrap.Modal(document.getElementById('confirmRemoveModal')) : null;
+    const confirmAdminModal = document.getElementById('confirmAdminModal') ? 
+                             new bootstrap.Modal(document.getElementById('confirmAdminModal')) : null;
+    
+    // Modal elements
+    const confirmRemoveBtn = document.getElementById('confirm-remove-btn');
+    const removeUsername = document.getElementById('remove-username');
+    const confirmAdminBtn = document.getElementById('confirm-admin-btn');
+    const adminUsername = document.getElementById('admin-username');
+    
+    let targetUserId = null;
+    
+    // Setup admin controls
+    setupAdminControls();
+    
+    // Scroll to bottom of chat on load
+    if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Focus input field
+    if (chatInput) {
+        chatInput.focus();
+    }
+    
+    // Function to add message to chat
+    function addMessageToChat(data) {
+        if (!chatMessages) return;
+        
+        const messageDiv = document.createElement('div');
+        
+        if (data.type === 'system') {
+            messageDiv.className = 'chat-message chat-message-system';
+            messageDiv.innerHTML = 
+                '<div class="message-bubble message-bubble-system">' +
+                '<div class="message-content">' + data.content + '</div>' +
+                '</div>';
+        } else {
+            const isSelf = data.user_id === USER_ID;
+            messageDiv.className = 'chat-message ' + (isSelf ? 'chat-message-self' : 'chat-message-other');
+            
+            let senderHTML = '';
+            if (!isSelf) {
+                senderHTML = '<div class="message-sender">' + data.username + '</div>';
+            }
+            
+            messageDiv.innerHTML = 
+                senderHTML +
+                '<div class="message-bubble ' + (isSelf ? 'message-bubble-self' : 'message-bubble-other') + '">' +
+                '<div class="message-content">' + data.content + '</div>' +
+                '<div class="message-time">' + formatTime(data.timestamp) + '</div>' +
+                '</div>';
+        }
+        
+        chatMessages.appendChild(messageDiv);
+    }
+    
+    // Function to update participants UI
+    function updateParticipantsUI(participants) {
+        if (!participantsSidebar) return;
+        
+        const participantsList = participantsSidebar.querySelector('.participants-list');
+        if (!participantsList) return;
+        
+        participantsList.innerHTML = '';
+        
+        participants.forEach(function(participant) {
+            const participantItem = document.createElement('div');
+            participantItem.className = 'participant-item';
+            
+            let adminBadge = '';
+            if (participant.is_admin) {
+                adminBadge = '<span class="admin-badge">ადმინი</span>';
+            }
+            
+            let selfIndicator = '';
+            if (participant.id === USER_ID) {
+                selfIndicator = '<span class="text-muted">(თქვენ)</span>';
+            }
+            
+            let adminControls = '';
+            if (IS_ADMIN && participant.id !== USER_ID) {
+                adminControls = 
+                    '<div class="participant-actions">' +
+                    '<button class="make-admin-btn" data-user-id="' + participant.id + '" title="ადმინის მინიჭება">' +
+                    '<i class="fas fa-user-shield"></i>' +
+                    '</button>' +
+                    '<button class="remove-user-btn" data-user-id="' + participant.id + '" title="ამოშლა">' +
+                    '<i class="fas fa-times"></i>' +
+                    '</button>' +
+                    '</div>';
+            }
+            
+            participantItem.innerHTML = 
+                '<div class="participant-info">' +
+                '<div class="participant-avatar">' +
+                participant.username.charAt(0).toUpperCase() +
+                '</div>' +
+                '<div>' +
+                participant.username +
+                adminBadge +
+                selfIndicator +
+                '</div>' +
+                '</div>' +
+                adminControls;
+            
+            participantsList.appendChild(participantItem);
+        });
+        
+        // Reattach event handlers
+        setupAdminControls();
+    }
+    
+    // Function to set up admin control buttons
+    function setupAdminControls() {
+        // Handle remove user buttons
+        document.querySelectorAll('.remove-user-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                targetUserId = this.getAttribute('data-user-id');
+                const username = this.closest('.participant-item').querySelector('.participant-info div').textContent.trim();
+                
+                if (removeUsername) {
+                    removeUsername.textContent = username;
+                }
+                
+                if (confirmRemoveModal) {
+                    confirmRemoveModal.show();
+                } else {
+                    if (confirm('დარწმუნებული ხართ, რომ გსურთ ' + username + '-ის ამოშლა?')) {
+                        socket.emit('kick_user', {
+                            room_code: ROOM_CODE,
+                            user_id: targetUserId
+                        });
+                        targetUserId = null;
+                    }
+                }
+            });
+        });
+        
+        // Handle make admin buttons
+        document.querySelectorAll('.make-admin-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                targetUserId = this.getAttribute('data-user-id');
+                const username = this.closest('.participant-item').querySelector('.participant-info div').textContent.trim();
+                
+                if (adminUsername) {
+                    adminUsername.textContent = username;
+                }
+                
+                if (confirmAdminModal) {
+                    confirmAdminModal.show();
+                } else {
+                    if (confirm('დარწმუნებული ხართ, რომ გსურთ ' + username + '-ისთვის ადმინის უფლებების მინიჭება?')) {
+                        // Make AJAX request to toggle admin status
+                        fetch('/chatting/manage/' + ROOM_CODE, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: 'action=toggle_admin&participant_id=' + targetUserId
+                        })
+                        .then(function(response) {
+                            if (response.ok) {
+                                location.reload();
+                            } else {
+                                alert('ადმინის სტატუსის შეცვლა ვერ მოხერხდა');
+                            }
+                        })
+                        .catch(function(error) {
+                            console.error('Error:', error);
+                            alert('ადმინის სტატუსის შეცვლა ვერ მოხერხდა');
+                        });
+                        targetUserId = null;
+                    }
+                }
+            });
+        });
+    }
+    
+    // Set up modal confirm buttons
+    if (confirmRemoveBtn) {
+        confirmRemoveBtn.addEventListener('click', function() {
+            if (targetUserId) {
+                socket.emit('kick_user', {
+                    room_code: ROOM_CODE,
+                    user_id: targetUserId
+                });
+                
+                confirmRemoveModal.hide();
+                targetUserId = null;
+            }
+        });
+    }
+    
+    if (confirmAdminBtn) {
+        confirmAdminBtn.addEventListener('click', function() {
+            if (targetUserId) {
+                // Make AJAX request to toggle admin status
+                fetch('/chatting/manage/' + ROOM_CODE, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'action=toggle_admin&participant_id=' + targetUserId
+                })
+                .then(function(response) {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('ადმინის სტატუსის შეცვლა ვერ მოხერხდა');
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error:', error);
+                    alert('ადმინის სტატუსის შეცვლა ვერ მოხერხდა');
+                });
+                
+                confirmAdminModal.hide();
+                targetUserId = null;
+            }
+        });
+    }
+    
+    // Helper function to format timestamp
+    function formatTime(timestamp) {
+        if (!timestamp) {
+            return new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+        const date = new Date(timestamp * 1000);
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return hours + ':' + minutes;
+    }
+    
+    // Before unload handler
+    window.addEventListener('beforeunload', function() {
+        socket.emit('leave_chatroom', { room_code: ROOM_CODE });
+    });
+});
+</script>
+{% endblock %}

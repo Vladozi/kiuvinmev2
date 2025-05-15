@@ -109,6 +109,28 @@
             grid-template-columns: 1fr;
         }
     }
+
+    #connection-status {
+        margin-bottom: 15px;
+        padding: 10px;
+        border-radius: 4px;
+        text-align: center;
+    }
+
+    .connected {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .connecting {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .disconnected {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
 </style>
 {% endblock %}
 
@@ -120,6 +142,10 @@
                 <h3 class="card-title">ვიდეო ჩათი</h3>
             </div>
             <div class="card-body">
+                <div id="connection-status" class="connecting">
+                    <span id="status-text">ვუკავშირდებით პარტნიორს...</span>
+                </div>
+
                 <div class="video-container" id="video-container">
                     <div class="video-item">
                         <video id="local-video" autoplay muted playsinline></video>
@@ -127,7 +153,7 @@
                     </div>
                     <div class="video-item">
                         <video id="remote-video" autoplay playsinline></video>
-                        <div class="username-label" id="partner-username">პარტნიორი</div>
+                        <div class="username-label" id="partner-username">{{ partner_username }}</div>
                     </div>
                 </div>
                 
@@ -180,6 +206,7 @@
     // Store the chat ID and username
     const CHAT_ID = "{{ chat_id }}";
     const USERNAME = "{{ current_user.username }}";
+    const PARTNER_USERNAME = "{{ partner_username }}";
 </script>
 <script src="{{ url_for('static', filename='js/chat_video.js') }}"></script>
 <script src="{{ url_for('static', filename='js/chat_messages.js') }}"></script>
